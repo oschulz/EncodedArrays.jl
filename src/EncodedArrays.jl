@@ -4,6 +4,12 @@ __precompile__(true)
 
 module EncodedArrays
 
-# package code goes here
+using ArraysOfArrays
+using BitOperations
+using StructArrays
+
+include("encoded_array.jl")
+include("varlen_io.jl")
+include("varlen_diff_codec.jl")
 
 end # module

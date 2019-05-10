@@ -3,6 +3,8 @@
 import Test
 Test.@testset "Package EncodedArrays" begin
 
-# test code goes here
+include("test_encoded_array.jl")
+include("test_varlen_io.jl")
+include("test_varlen_diff_codec.jl")
 
 end # testset

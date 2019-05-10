@@ -7,6 +7,12 @@
 [![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/github/oschulz/EncodedArrays.jl?branch=master&svg=true)](https://ci.appveyor.com/project/oschulz/EncodedArrays-jl)
 [![Codecov](https://codecov.io/gh/oschulz/EncodedArrays.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/oschulz/EncodedArrays.jl)
 
+EncodedArray provides an API for arrays that store their elements in
+encoded/compressed form. This package is meant to be lightweight and only
+implements a simple codec `VarlenDiffArrayCodec`. As codec implementations are
+often complex and have various dependencies, more advanced codecs should
+be implemented in separate packages.
+
 
 ## Documentation
 
