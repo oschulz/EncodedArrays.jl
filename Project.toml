@@ -1,0 +1,14 @@
+name = "EncodedArrays"
+uuid = "97725368-735e-11e9-0dd7-6bf34c3b13a8"
+version = "0.1.0"
+
+[deps]
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
