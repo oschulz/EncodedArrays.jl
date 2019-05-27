@@ -31,6 +31,11 @@ using Test
         @test typeof(convert(Vector{Int32}, data_enc)) == Vector{Int32}
     end
 
+    @testset "collect" begin
+        @test @inferred(collect(data_enc)) == data
+        @test typeof(collect(data_enc)) == typeof(data)
+    end
+
     @testset "getindex" begin
         @test @inferred(data_enc[:]) == data
         @test typeof(data_enc[:]) == Array{eltype(data),1}

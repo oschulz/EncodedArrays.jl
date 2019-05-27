@@ -185,7 +185,7 @@ Base.IndexStyle(A::EncodedArray) = IndexLinear()
 
 
 function _getindex(A::EncodedArray, idxs::AbstractVector{Int})
-    B = Array(A)
+    B = collect(A)
     if idxs == eachindex(IndexLinear(), A)
         B
     else
@@ -194,14 +194,14 @@ function _getindex(A::EncodedArray, idxs::AbstractVector{Int})
 end
 
 
-_getindex(A::EncodedArray, i::Int) = Array(A)[i]
+_getindex(A::EncodedArray, i::Int) = collect(A)[i]
 
 
 Base.@propagate_inbounds Base.getindex(A::EncodedArray, idxs) =
     _getindex(A, Base.to_indices(A, (idxs,))...)
 
 
-function _setindex!(A::AbstractArray, B::EncodedArray, idxs::AbstractVector{Int})
+@inline function _setindex!(A::AbstractArray, B::EncodedArray, idxs::AbstractVector{Int})
     @boundscheck let n = length(idxs), len_B = length(eachindex(B))
         n == len_B || Base.throw_setindex_mismatch(B, (n,))
     end
@@ -219,7 +219,7 @@ Base.@propagate_inbounds function Base.setindex!(A::AbstractArray, B::EncodedArr
     _setindex!(A, B, Base.to_indices(A, (idxs,))...)
 end
 
-Base.@propagate_inbounds function Base.setindex!(A::Array, B::EncodedArray, idxs::AbstractVector{Int})
+@inline Base.@propagate_inbounds function Base.setindex!(A::Array, B::EncodedArray, idxs::AbstractVector{Int})
     @boundscheck checkbounds(A, idxs)
     _setindex!(A, B, Base.to_indices(A, (idxs,))...)
 end
@@ -241,7 +241,7 @@ Base.append!(A::Vector, B::EncodedArray) = _append!(A, B)
 # Base.append!(A::AbstractArray{T,N}, B::EncodedArray) where {T,N} = ...
 
 
-function Base.copyto!(dest::AbstractArray, src::EncodedArray)
+@inline function Base.copyto!(dest::AbstractArray, src::EncodedArray)
     @boundscheck if length(eachindex(dest)) < length(eachindex(src))
         throw(BoundsError())
     end
