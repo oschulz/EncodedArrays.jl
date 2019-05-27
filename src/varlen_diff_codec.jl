@@ -29,7 +29,7 @@ export VarlenDiffArrayCodec
 # end
 
 
-function encode_data!(encoded::AbstractVector{UInt8}, codec::AbstractArrayCodec, data::AbstractVector{T}) where {T}
+function encode_data!(encoded::AbstractVector{UInt8}, codec::VarlenDiffArrayCodec, data::AbstractVector{T}) where {T}
     output = IOBuffer()
     last_x::T = zero(T)
     @inbounds for x in data
@@ -46,7 +46,7 @@ function encode_data!(encoded::AbstractVector{UInt8}, codec::AbstractArrayCodec,
 end
 
 
-function decode_data!(data::AbstractVector{T}, codec::AbstractArrayCodec, encoded::AbstractVector{UInt8}) where {T}
+function decode_data!(data::AbstractVector{T}, codec::VarlenDiffArrayCodec, encoded::AbstractVector{UInt8}) where {T}
     input = IOBuffer(encoded)
     last_x::T = zero(T)
     i = firstindex(data)
