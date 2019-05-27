@@ -6,6 +6,7 @@ module EncodedArrays
 
 using ArraysOfArrays
 using BitOperations
+using FillArrays
 using StructArrays
 
 include("encoded_array.jl")

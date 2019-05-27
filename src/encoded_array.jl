@@ -32,6 +32,10 @@ function |>(A::AbstractArray{T}, codec::AbstractArrayCodec) where T
 end
 
 
+# Make AbstractArrayCodec behave as a Scalar for broadcasting
+@inline Base.Broadcast.broadcastable(codec::AbstractArrayCodec) = (codec,)
+
+
 """
     encode_data!(encoded::AbstractVector{UInt8}, codec::AbstractArrayCodec, data::AbstractArray)
 
@@ -262,7 +266,111 @@ function ==(A::EncodedArray, B::EncodedArray)
 end
 
 
+"""
+    const VectorOfEncodedArrays{T,N,...} = StructArray{EncodedArray{...},...}
+
+Alias for vectors of encoded arrays that store the code units of all elements
+in contiguous fashion using `StructArrays.StructArray`
+and `ArraysOfArray.VectorOfArrays`.
+"""
+const VectorOfEncodedArrays{
+    T,N,
+    C<:AbstractArrayCodec,
+    VC <: StructArray{C,1},
+    VS <: AbstractVector{<:NTuple{N,Integer}},
+    VOA <: VectorOfArrays
+} = StructArray{
+    EncodedArray{T,N,C,Array{UInt8,1}},
+    1,
+    NamedTuple{
+        (:codec, :size, :encoded),
+        Tuple{VC,VS,VOA}
+    }
+}
+
+export VectorOfEncodedArrays
+
+
+const BroadcastedEncodeVectorOfArrays{T,N,C<:AbstractArrayCodec} = Base.Broadcast.Broadcasted{
+    <:Base.Broadcast.AbstractArrayStyle{1},
+    Tuple{Base.OneTo{Int64}},
+    typeof(|>),
+    <:Tuple{
+        AbstractVector{<:AbstractArray{T,N}},
+        Union{Tuple{C},AbstractVector{<:C}}
+    }
+}
+
+
+@inline _get_1st_or_ith(A, i::Int) = (length(A) == 1) ? A[1] : A[i]
+
+function _bcast_enc_impl(::Type{T}, ::Val{N}, ::Type{C}, data_arg, codec_arg) where {T,N,C} 
+    idxs_tuple = Base.Broadcast.combine_axes(data_arg, codec_arg)
+    @assert length(idxs_tuple) == 1
+    idxs = idxs_tuple[1]
+
+    n = length(idxs)
+    codec_vec = StructArray{C,1}(undef, n)
+    size_vec = Vector{NTuple{N,Int}}(undef, n)
+    encoded_vec = VectorOfVectors{UInt8}()
+
+    sizehint!(encoded_vec.elem_ptr, n + 1)
+    sizehint!(encoded_vec.kernel_size, n)
+
+    for i in idxs
+        data = _get_1st_or_ith(data_arg, i)
+        codec = _get_1st_or_ith(codec_arg, i)
+
+        codec_vec[i] = codec
+        size_vec[i] = size(data)
+
+        # ToDo: Improve, eliminate temporary memory allocation:
+        tmp_encoded = encode_data!(Vector{UInt8}(), codec, data)
+        push!(encoded_vec, tmp_encoded)
+    end
+
+    result = StructArray{EncodedArray{T,1,C,Vector{UInt8}}}((
+        codec_vec,
+        size_vec,
+        encoded_vec
+    ))
+
+    @assert result isa VectorOfEncodedArrays{T,1,C}
+    result
+end
+
+function Base.copy(instance::BroadcastedEncodeVectorOfArrays{T,N,C}) where {T,N,C}
+    data_arg = instance.args[1]
+    codec_arg = instance.args[2]
+    _bcast_enc_impl(T, Val{N}(), C, data_arg, codec_arg)    
+end
+
+
+
+const BroadcastedDecodeVectorOfArrays{T,N,C<:AbstractArrayCodec} = Base.Broadcast.Broadcasted{
+    Base.Broadcast.DefaultArrayStyle{1},
+    Tuple{Base.OneTo{Int64}},
+    typeof(collect),
+    <:Tuple{AbstractVector{<:EncodedArray{T,N,C}}}
+}
+
+function _bcast_dec_impl(::Type{T}, ::Val{N}, ::Type{C}, encoded_data) where {T,N,C} 
+    result = VectorOfArrays{T,N}()
+    @inbounds for i in eachindex(encoded_data)
+        x = encoded_data[i]
+        push!(result, Fill(typemax(T), length(x)))
+        copyto!(last(result), x)
+    end
+    result
+end
+
+function Base.copy(instance::BroadcastedDecodeVectorOfArrays{T,N,C}) where {T,N,C}
+    _bcast_dec_impl(T, Val{N}(), C, instance.args[1])    
+end
+
+
+
 # ToDo: SerialArrayCodec with decode_next, encode_next!, pos_type(codec),
 #       finalize_codeunits!
 
-# ToDo: Custom broadcasting.
+# ToDo: Custom broadcasting over encoded array.
