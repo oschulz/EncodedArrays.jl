@@ -156,9 +156,9 @@ EncodedArray{T}(
 ) where {T} = EncodedArray{T, typeof(codec),typeof(encoded)}(codec, (len,), encoded)
 
 
-@inline Base.size(A::EncodedArray) = getfield(A, :size)
-@inline getcodec(A::EncodedArray) = getfield(A, :codec)
-@inline Base.codeunits(A::EncodedArray) = getfield(A, :encoded)
+@inline Base.size(A::EncodedArray) = A.size
+@inline getcodec(A::EncodedArray) = A.codec
+@inline Base.codeunits(A::EncodedArray) = A.encoded
 
 # ToDo: Base.iscontiguous
 
