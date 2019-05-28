@@ -55,15 +55,6 @@ Returns `data`.
 function decode_data! end
 
 
-# """
-#     encarraytype(::Type{<:AbstractArrayCodec},::Type{<:AbstractArray{T,N}}})
-# 
-# Returns the concrete subtype of [`AbstractEncodedArray`](@ref) to use
-# for the given codec and array type. Returns `EncodedArray{T,N}` by default.
-# """
-# encarraytype(::Type{<:AbstractArrayCodec},::Type{<:AbstractArray{T,N}}) where {T,N} = EncodedArray{T,N}
-
-
 
 """
     AbstractEncodedArray{T,N} <: AbstractArray{T,N}
