@@ -159,6 +159,9 @@ EncodedArray{T}(
     encoded::AbstractVector{UInt8}
 ) where {T} = EncodedArray{T, typeof(codec),typeof(encoded)}(codec, (len,), encoded)
 
+EncodedArray{T,N,C,DV}(A::EncodedArray{T,N,C}) where {T,N,C,DV} = EncodedArray{T,N,C,DV}(A.codec, A.size, A.encoded)
+Base.convert(::Type{EncodedArray{T,N,C,DV}}, A::EncodedArray{T,N,C}) where {T,N,C,DV} = EncodedArray{T,N,C,DV}(A)
+
 
 @inline Base.size(A::EncodedArray) = A.size
 @inline getcodec(A::EncodedArray) = A.codec
