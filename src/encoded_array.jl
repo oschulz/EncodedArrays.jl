@@ -291,6 +291,12 @@ const VectorOfEncodedArrays{
 export VectorOfEncodedArrays
 
 
+# Specialize getindex to properly support ArraysOfArrays, preventing
+# conversion to exact element type:
+@inline Base.getindex(A::StructArray{<:EncodedArray{T}}, I::Int...) where T =
+    EncodedArray{T}(A.codec[I...], A.size[I...], A.encoded[I...])
+
+
 const BroadcastedEncodeVectorOfArrays{T,N,C<:AbstractArrayCodec} = Base.Broadcast.Broadcasted{
     <:Base.Broadcast.AbstractArrayStyle{1},
     Tuple{Base.OneTo{Int64}},
