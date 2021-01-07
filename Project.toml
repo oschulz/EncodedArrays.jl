@@ -11,7 +11,7 @@ StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
 [compat]
 ArraysOfArrays = "0.4, 0.5"
 BitOperations = "0.2"
-FillArrays = "0.7, 0.8, 0.9, 0.10"
+FillArrays = "0.7, 0.8, 0.9, 0.10, 0.11"
 StructArrays = "0.4"
 julia = "1"
 
