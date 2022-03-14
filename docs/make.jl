@@ -7,6 +7,14 @@
 using Documenter
 using EncodedArrays
 
+# Doctest setup
+DocMeta.setdocmeta!(
+    EncodedArrays,
+    :DocTestSetup,
+    :(using EncodedArrays);
+    recursive=true,
+)
+
 makedocs(
     sitename = "EncodedArrays",
     modules = [EncodedArrays],
