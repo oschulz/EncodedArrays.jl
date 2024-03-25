@@ -1,16 +1,23 @@
 # This file is a part of EncodedArrays.jl, licensed under the MIT License (MIT).
 
 """
-    abstract type AbstractArrayCodec <: Codecs.Codec end
+    abstract type AbstractArrayCodec end
 
 Abstract type for arrays codecs.
 
-Subtypes must implement the [`AbstractEncodedArray`](@ref) API.
-Most coded should use [`EncodedArray`](@ref) as the concrete subtype of
-`AbstractArrayCodec`. Codecs that use a custom subtype of
-`AbstractEncodedArray` must implement
+Subtypes must implement
 
-    EncodedArrays.encarraytype(::Type{<:AbstractArrayCodec},::Type{<:AbstractArray{T,N}})::Type{<:AbstractEncodedArray{T,N}}
+* [`encoded_eltype(codec::AbstractArrayCodec, data_eltype::Type)`](@ref)
+* [`encoded_size(codec::AbstractArrayCodec, data::AbstractArray)`](@ref)
+* [`encode_data!(encoded_data::AbstractVector{UInt8}, codec::AbstractArrayCodec, data::AbstractArray)`](@ref)
+* [`decoded_eltype(codec::AbstractArrayCodec, encoded_eltype::Type)`](@ref)
+* [`decoded_size(codec::AbstractArrayCodec, encoded_data::AbstractArray)::Dims`](@ref)
+* [`decode_data!(data::AbstractVector{UInt8}, codec::AbstractArrayCodec, encoded_data::AbstractArray)`](@ref)
+
+and may in some cases need to specialize
+
+* [`encode_data(codec::AbstractArrayCodec, data::AbstractArray)`](@ref)
+* [`decode_data(codec::AbstractArrayCodec, encoded_data::AbstractArray)`](@ref)
 """
 abstract type AbstractArrayCodec end
 export AbstractArrayCodec
@@ -20,7 +27,7 @@ export AbstractArrayCodec
 
 
 """
-    encoded_eltype(codec::AbstractArrayCodec, data_eltype::Type)
+    encoded_eltype(codec::AbstractArrayCodec, data_eltype::Type)::Type
 
 Returns the element type of the encoded data that will be produced by encoding
 data with element type `data_eltype` using `codec`.
