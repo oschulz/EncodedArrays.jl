@@ -3,6 +3,8 @@
 using EncodedArrays
 using Test
 
+using ArraysOfArrays
+
 @testset "encoded_array" begin
     data = rand(Int16(-1000):Int16(2000), 21)
     codec = VarlenDiffArrayCodec()
@@ -79,5 +81,35 @@ using Test
         @test A == data
 
         @test_throws BoundsError @inferred(copyto!(similar(data, 5), data_enc))
+    end
+
+    @testset "VectorOfEncodedArrays" begin
+        codec = VarlenDiffArrayCodec()
+        data_orig = VectorOfArrays([cumsum(rand(-5:5, rand(1:100))) for i in 1:10])
+        data_enc = @inferred(broadcast(|>, data_orig, codec))
+        @test data_enc isa VectorOfEncodedArrays
+        @test (a -> collect(a)).(data_enc) == data_orig
+        data_dec = @inferred(broadcast(collect, data_enc) )
+        @test data_dec isa VectorOfArrays
+        @test data_dec == data_orig
+        @test @inferred(data_enc[2]) isa EncodedArray
+        @test @inferred(collect(data_enc[2])) == data_orig[2]
+        @test @inferred(data_enc[2:5]) isa VectorOfEncodedArrays
+        @test @inferred(broadcast(collect, data_enc[2:5])) == data_orig[2:5]
+    end
+
+    @testset "VectorOfEncodedSimilarArrays" begin
+        codec = VarlenDiffArrayCodec()
+        data_orig = VectorOfSimilarArrays([cumsum(rand(-5:5, 100)) for i in 1:10])
+        data_enc = @inferred(broadcast(|>, data_orig, codec))
+        @test data_enc isa VectorOfEncodedSimilarArrays
+        @test (a -> collect(a)).(data_enc) == data_orig
+        data_dec = @inferred(broadcast(collect, data_enc) )
+        @test data_dec isa VectorOfSimilarArrays
+        @test data_dec == data_orig
+        @test @inferred(data_enc[2]) isa EncodedArray
+        @test @inferred(collect(data_enc[2])) == data_orig[2]
+        @test @inferred(data_enc[2:5]) isa VectorOfEncodedSimilarArrays
+        @test @inferred(broadcast(collect, data_enc[2:5])) == data_orig[2:5]
     end
 end # testset
