@@ -2,65 +2,6 @@
 
 
 """
-    abstract type AbstractArrayCodec <: Codecs.Codec end
-
-Abstract type for arrays codecs.
-
-Subtypes must implement the [`AbstractEncodedArray`](@ref) API.
-Most coded should use [`EncodedArray`](@ref) as the concrete subtype of
-`AbstractArrayCodec`. Codecs that use a custom subtype of
-`AbstractEncodedArray` must implement
-
-    EncodedArrays.encarraytype(::Type{<:AbstractArrayCodec},::Type{<:AbstractArray{T,N}})::Type{<:AbstractEncodedArray{T,N}}
-"""
-abstract type AbstractArrayCodec end
-export AbstractArrayCodec
-
-
-import Base.|>
-
-"""
-    ¦>(A::AbstractArray{T}, codec::AbstractArrayCodec)::AbstractEncodedArray
-
-Encode `A` using `codec` and return an [`AbstractEncodedArray`](@ref). The
-default implementation returns an [`EncodedArray`](@ref).
-"""
-function |>(A::AbstractArray{T}, codec::AbstractArrayCodec) where T
-    encoded = Vector{UInt8}()
-    encode_data!(encoded, codec, A)
-    EncodedArray{T}(codec, size(A), encoded)
-end
-
-
-# Make AbstractArrayCodec behave as a Scalar for broadcasting
-@inline Base.Broadcast.broadcastable(codec::AbstractArrayCodec) = (codec,)
-
-
-"""
-    encode_data!(encoded::AbstractVector{UInt8}, codec::AbstractArrayCodec, data::AbstractArray)
-
-Will resize `encoded` as necessary to fit the encoded data.
-
-Returns `encoded`.
-"""
-function encode_data! end
-
-
-"""
-    decode_data!(data::AbstractArray, codec::AbstractArrayCodec, encoded::AbstractVector{UInt8})
-
-Depending on `codec`, may or may not resize `decoded` to fit the size of the
-decoded data. Codecs may require `decoded` to be of correct size (e.g. to
-improved performance or when the size/shape of the decoded data cannot be
-easily inferred from the encoded data.
-
-Returns `data`.
-"""
-function decode_data! end
-
-
-
-"""
     AbstractEncodedArray{T,N} <: AbstractArray{T,N}
 
 Abstract type for arrays that store their elements in encoded/compressed form.
@@ -465,4 +406,16 @@ end
 
 function Base.copy(instance::BroadcastedDecodeVectorOfSimilarArrays)
     _bcast_dec_impl(instance.args[1])    
+end
+
+
+
+"""
+    as_encoded(codec::AbstractArrayCodec, A::AbstractArray{T})::AbstractEncodedArray
+
+Encode `A` using `codec` and return an [`AbstractEncodedArray`](@ref). The
+default implementation returns an [`EncodedArray`](@ref).
+"""
+function as_encoded(codec::AbstractArrayCodec, A::AbstractArray{T}) where T
+    EncodedArray{T}(codec, size(A), encode(data(codec, A)))
 end
