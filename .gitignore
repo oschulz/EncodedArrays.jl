@@ -24,6 +24,11 @@ LocalPreferences.toml
 # Julia ConkaPkg environments
 .CondaPkg
 
+### Documenter ###
+
+docs/build/
+
+
 ### Visual Studio Code ###
 
 .vscode
