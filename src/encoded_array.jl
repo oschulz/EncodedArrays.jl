@@ -387,9 +387,9 @@ The code units of all entries are stored in contiguous fashion using
 an `ArraysOfArrays.PartsView`. All element arrays are encoded using the
 same codec.
 
-Operations that go through [`ArraysOfArrays.fused`](@ref) (like `parent`,
-`stack` and comparison with other arrays of similar arrays) decode all
-element arrays, so they allocate.
+Operations that go through `ArraysOfArrays.fused` (like `parent`, `stack`
+and comparison with other arrays of similar arrays) decode all element
+arrays, so they allocate.
 """
 struct VectorOfEncodedSimilarArrays{
     T, M,
