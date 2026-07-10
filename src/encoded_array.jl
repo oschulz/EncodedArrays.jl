@@ -155,9 +155,9 @@ EncodedArray{T}(
 
 EncodedArray{T}(
     codec::AbstractArrayCodec,
-    length::Integer,
+    len::Integer,
     encoded::AbstractVector{UInt8}
-) where {T} = EncodedArray{T, typeof(codec),typeof(encoded)}(codec, (len,), encoded)
+) where {T} = EncodedArray{T}(codec, (len,), encoded)
 
 EncodedArray{T,N,C,DV}(A::EncodedArray{T,N,C}) where {T,N,C,DV} = EncodedArray{T,N,C,DV}(A.codec, A.size, A.encoded)
 Base.convert(::Type{EncodedArray{T,N,C,DV}}, A::EncodedArray{T,N,C}) where {T,N,C,DV} = EncodedArray{T,N,C,DV}(A)
@@ -366,7 +366,7 @@ function _bcast_dec_impl(::Type{T}, ::Val{N}, ::Type{C}, encoded_data) where {T,
     result = VectorOfArrays{T,N}()
     @inbounds for i in eachindex(encoded_data)
         x = encoded_data[i]
-        push!(result, Fill(typemax(T), length(x)))
+        push!(result, Fill(typemax(T), size(x)))
         copyto!(last(result), x)
     end
     result

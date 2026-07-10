@@ -28,6 +28,10 @@ using BitOperations
         test_encdec(UInt64, f_read, f_write, UInt64(0x80), [0x80, 0x01])
         test_encdec(UInt64, f_read, f_write, UInt64(0x4c6b5f94759), [0xd9, 0x8e, 0xe5, 0xaf, 0xeb, 0x98, 0x01])
         @test_throws ErrorException test_encdec(UInt32, f_read, f_write, UInt64(0x4c6b5f94759), [0xd9, 0x8e, 0xe5, 0xaf, 0xeb, 0x98, 0x01])
+
+        test_encdec(UInt8, f_read, f_write, UInt8(0xff), [0xff, 0x01])
+        # Values that exceed the target type must not be silently truncated:
+        @test_throws ErrorException f_read(IOBuffer([0xac, 0x02]), UInt8)
     end
 
     @testset "read_autozz_varlen, write_autozz_varlen" begin
