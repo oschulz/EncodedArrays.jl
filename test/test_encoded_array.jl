@@ -31,6 +31,9 @@ using ArraysOfArrays
         @test typeof(convert(Vector{Int16}, data_enc)) == Vector{Int16}
         @test @inferred(convert(Vector{Int32}, data_enc)) == data
         @test typeof(convert(Vector{Int32}, data_enc)) == Vector{Int32}
+
+        @test @inferred(EncodedArray{Int16}(codec, length(data), codeunits(data_enc))) == data_enc
+        @test EncodedArray{Int16}(codec, (length(data),), codeunits(data_enc)) == data_enc
     end
 
     @testset "collect" begin
