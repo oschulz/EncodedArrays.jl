@@ -3,6 +3,7 @@
 module EncodedArrays
 
 using ArraysOfArrays
+using ArraysOfArrays: NestedArrayStyle
 using BitOperations
 using FillArrays
 

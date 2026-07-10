@@ -103,12 +103,12 @@ using ArraysOfArrays
 
     @testset "VectorOfEncodedSimilarArrays" begin
         codec = VarlenDiffArrayCodec()
-        data_orig = VectorOfSimilarArrays([cumsum(rand(-5:5, 100)) for i in 1:10])
+        data_orig = VectorOfSimilarArrays(cumsum(rand(-5:5, 100, 10), dims = 1))
         data_enc = @inferred(broadcast(|>, data_orig, codec))
         @test data_enc isa VectorOfEncodedSimilarArrays
         @test (a -> collect(a)).(data_enc) == data_orig
         data_dec = @inferred(broadcast(collect, data_enc) )
-        @test data_dec isa VectorOfSimilarArrays
+        @test data_dec isa VectorOfSimilarArrays{Int,1}
         @test data_dec == data_orig
         @test @inferred(data_enc[2]) isa EncodedArray
         @test @inferred(collect(data_enc[2])) == data_orig[2]
