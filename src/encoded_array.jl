@@ -181,7 +181,7 @@ Base.convert(::Type{Vector}, A::EncodedArray) = Vector(A)
 Base.convert(::Type{Matrix}, A::EncodedArray) = Matrix(A)
 
 
-Base.IndexStyle(A::EncodedArray) = IndexLinear()
+Base.IndexStyle(::Type{<:EncodedArray}) = IndexLinear()
 
 
 function _getindex(A::EncodedArray, idxs::AbstractVector{Int})
