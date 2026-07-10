@@ -2,16 +2,14 @@
 
 
 """
-    abstract type AbstractArrayCodec <: Codecs.Codec end
+    abstract type AbstractArrayCodec
 
-Abstract type for arrays codecs.
+Abstract type for array codecs.
 
-Subtypes must implement the [`AbstractEncodedArray`](@ref) API.
-Most coded should use [`EncodedArray`](@ref) as the concrete subtype of
-`AbstractArrayCodec`. Codecs that use a custom subtype of
-`AbstractEncodedArray` must implement
-
-    EncodedArrays.encarraytype(::Type{<:AbstractArrayCodec},::Type{<:AbstractArray{T,N}})::Type{<:AbstractEncodedArray{T,N}}
+Most codecs can use [`EncodedArray`](@ref) as their encoded-array type and
+only need to implement [`EncodedArrays.encode_data!`](@ref) and
+[`EncodedArrays.decode_data!`](@ref). Codecs that use a custom subtype of
+[`AbstractEncodedArray`](@ref) must implement its full API.
 """
 abstract type AbstractArrayCodec end
 export AbstractArrayCodec
@@ -20,7 +18,7 @@ export AbstractArrayCodec
 import Base.|>
 
 """
-    ¦>(A::AbstractArray{T}, codec::AbstractArrayCodec)::AbstractEncodedArray
+    |>(A::AbstractArray{T}, codec::AbstractArrayCodec)::AbstractEncodedArray
 
 Encode `A` using `codec` and return an [`AbstractEncodedArray`](@ref). The
 default implementation returns an [`EncodedArray`](@ref).
@@ -49,10 +47,10 @@ function encode_data! end
 """
     decode_data!(data::AbstractArray, codec::AbstractArrayCodec, encoded::AbstractVector{UInt8})
 
-Depending on `codec`, may or may not resize `decoded` to fit the size of the
-decoded data. Codecs may require `decoded` to be of correct size (e.g. to
-improved performance or when the size/shape of the decoded data cannot be
-easily inferred from the encoded data.
+Depending on `codec`, may or may not resize `data` to fit the size of the
+decoded data. Codecs may require `data` to be of correct size (e.g. to
+improve performance or when the size/shape of the decoded data cannot be
+easily inferred from the encoded data).
 
 Returns `data`.
 """
@@ -68,18 +66,13 @@ Abstract type for arrays that store their elements in encoded/compressed form.
 In addition to the standard `AbstractArray` API, an `AbstractEncodedArray`
 must support the functions
 
-* `EncodedArrays.getcodec(A::EncodedArray)`: Returns the codec.
-* `Base.codeunits(A::EncodedArray)`: Returns the internal encoded data
-  representation.
+* `EncodedArrays.getcodec(A::AbstractEncodedArray)`: Returns the codec.
+* `Base.codeunits(A::AbstractEncodedArray)`: Returns the internal encoded
+  data representation.
 
 Encoded arrays will typically be created via
 
-    A_enc = (codec::AbstractArrayCodec)(A::AbstractArray)
-
-or
-
-    A_enc = AbstractEncodedArray(undef, codec::AbstractArrayCodec)
-    append!(A_enc, B::AbstractArray)
+    A_enc = A |> codec
 
 Decoding happens via standard array conversion or assignment:
 
