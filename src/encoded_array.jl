@@ -170,6 +170,8 @@ end
 Base.Array{T}(A::EncodedArray{U,N}) where {T,N,U} = Array{T,N}(A)
 Base.Array(A::EncodedArray{T,N}) where {T,N} = Array{T,N}(A)
 
+Base.collect(A::EncodedArray) = Array(A)
+
 Base.Vector(A::EncodedArray{T,1}) where {T} = Array{T,1}(A)
 Base.Matrix(A::EncodedArray{T,2}) where {T} = Array{T,2}(A)
 
