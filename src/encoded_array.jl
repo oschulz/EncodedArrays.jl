@@ -275,15 +275,16 @@ end
 A vector of encoded arrays.
 
 The code units of all entries are stored in contiguous fashion using
-an `ArraysOfArray.VectorOfArrays`. All element arrays are encoded using the
+an `ArraysOfArrays.PartsView`. All element arrays are encoded using the
 same codec.
 """
 struct VectorOfEncodedArrays{
     T, N,
     C <: AbstractArrayCodec,
     VS <: AbstractVector{<:NTuple{N,<:Integer}},
-    VOA <: VectorOfArrays
-} <: AbstractVector{EncodedArray{T,N,C,Array{UInt8,1}}}
+    VOA <: PartsView{UInt8},
+    DV <: AbstractVector{UInt8}
+} <: AbstractVector{EncodedArray{T,N,C,DV}}
     codec::C
     innersizes::VS
     encoded::VOA
@@ -291,8 +292,10 @@ end
 
 export VectorOfEncodedArrays
 
-VectorOfEncodedArrays{T}(codec::AbstractArrayCodec, innersizes::AbstractVector{<:NTuple{N,<:Integer}}, encoded::VectorOfArrays) where {T,N} =
-    VectorOfEncodedArrays{T,N,typeof(codec),typeof(innersizes),typeof(encoded)}(codec, innersizes, encoded)
+VectorOfEncodedArrays{T}(codec::AbstractArrayCodec, innersizes::AbstractVector{<:NTuple{N,<:Integer}}, encoded::PartsView{UInt8}) where {T,N} =
+    VectorOfEncodedArrays{T,N,typeof(codec),typeof(innersizes),typeof(encoded),eltype(encoded)}(codec, innersizes, encoded)
+
+ArraysOfArrays.innersizes(A::VectorOfEncodedArrays) = A.innersizes
 
 
 @inline Base.size(A::VectorOfEncodedArrays) = size(A.encoded)
@@ -307,7 +310,7 @@ VectorOfEncodedArrays{T}(codec::AbstractArrayCodec, innersizes::AbstractVector{<
 
 
 const BroadcastedEncodeVectorOfArrays{T,N,C<:AbstractArrayCodec} = Base.Broadcast.Broadcasted{
-    <:Base.Broadcast.AbstractArrayStyle{1},
+    NestedArrayStyle{1},
     Tuple{Base.OneTo{Int}},
     typeof(|>),
     <:Tuple{
@@ -327,7 +330,7 @@ function _bcast_enc_impl(::Type{T}, ::Val{N}, ::Type{C}, data_arg, codec_arg) wh
     codec = only(codec_arg)
     n = length(idxs)
     size_vec = Vector{NTuple{N,Int}}(undef, n)
-    encoded_vec = VectorOfVectors{UInt8}()
+    encoded_vec = PartsView{UInt8}()
 
     sizehint!(encoded_vec.elem_ptr, n + 1)
     sizehint!(encoded_vec.kernel_size, n)
@@ -388,14 +391,19 @@ end
 A vector of encoded arrays that have the same original size.
 
 The code units of all entries are stored in contiguous fashion using
-an `ArraysOfArray.VectorOfArrays`. All element arrays are encoded using the
+an `ArraysOfArrays.PartsView`. All element arrays are encoded using the
 same codec.
+
+Operations that go through `ArraysOfArrays.fused` (like `parent`,
+`stack` and comparison with other arrays of similar arrays) decode all
+element arrays, so they allocate.
 """
 struct VectorOfEncodedSimilarArrays{
     T, M,
     C <: AbstractArrayCodec,
-    VOA <: VectorOfArrays
-} <: AbstractArrayOfSimilarArrays{T,M,1}
+    VOA <: PartsView{UInt8},
+    DV <: AbstractVector{UInt8}
+} <: AbstractVectorOfSimilarArrays{T,M,EncodedArray{T,M,C,DV}}
     codec::C
     innersize::Dims{M}
     encoded::VOA
@@ -403,28 +411,30 @@ end
 
 export VectorOfEncodedSimilarArrays
 
-VectorOfEncodedSimilarArrays{T}(codec::AbstractArrayCodec, innersize::Dims{M}, encoded::VectorOfArrays) where {T,M} =
-    VectorOfEncodedSimilarArrays{T,M,typeof(codec),typeof(encoded)}(codec, innersize, encoded)
+VectorOfEncodedSimilarArrays{T}(codec::AbstractArrayCodec, innersize::Dims{M}, encoded::PartsView{UInt8}) where {T,M} =
+    VectorOfEncodedSimilarArrays{T,M,typeof(codec),typeof(encoded),eltype(encoded)}(codec, innersize, encoded)
 
 @inline Base.size(A::VectorOfEncodedSimilarArrays) = size(A.encoded)
 
 @inline Base.getindex(A::VectorOfEncodedSimilarArrays{T}, i::Int) where T =
     EncodedArray{T}(A.codec, A.innersize, A.encoded[i])
 
-@inline Base.getindex(A::VectorOfEncodedSimilarArrays{T}, idxs::Union{AbstractArray,Colon}) where T = 
+@inline Base.getindex(A::VectorOfEncodedSimilarArrays{T}, idxs::Union{AbstractArray,Colon}) where T =
     VectorOfEncodedSimilarArrays{T}(A.codec, A.innersize, A.encoded[idxs])
 
 @inline Base.IndexStyle(::Type{<:VectorOfEncodedSimilarArrays}) = IndexLinear()
 
 ArraysOfArrays.innersize(A::VectorOfEncodedSimilarArrays) = A.innersize
 
+ArraysOfArrays.fused(A::VectorOfEncodedSimilarArrays) = fused(_bcast_dec_impl(A))
+
 
 const BroadcastedEncodeVectorOfSimilarArrays{T,M,C<:AbstractArrayCodec} = Base.Broadcast.Broadcasted{
-    <:Base.Broadcast.AbstractArrayStyle{1},
+    NestedArrayStyle{1},
     Tuple{Base.OneTo{Int}},
     typeof(|>),
     <:Tuple{
-        AbstractArrayOfSimilarArrays{T,M,1},
+        AbstractVectorOfSimilarArrays{T,M},
         Union{Tuple{C},Ref{C}}
     }
 }
@@ -441,7 +451,7 @@ end
 
 
 const BroadcastedDecodeVectorOfSimilarArrays{T,M,C<:AbstractArrayCodec} = Base.Broadcast.Broadcasted{
-    Base.Broadcast.DefaultArrayStyle{1},
+    NestedArrayStyle{1},
     Tuple{Base.OneTo{Int}},
     typeof(collect),
     <:Tuple{VectorOfEncodedSimilarArrays{T,M,C}}
@@ -457,7 +467,7 @@ function _bcast_dec_impl(encoded_arrays::VectorOfEncodedSimilarArrays{T,M,C}) wh
     elsz = encoded_arrays.innersize
     encoded_data = encoded_arrays.encoded
     n = length(encoded_data)
-    decoded_data = similar(flatview(encoded_data), T, elsz..., n)
+    decoded_data = similar(vecflattened(encoded_data), T, elsz..., n)
     result = VectorOfSimilarArrays(decoded_data)
     _decode_data_noret!.(result, Ref(codec), encoded_data)
     return result
