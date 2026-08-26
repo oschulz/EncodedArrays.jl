@@ -140,6 +140,21 @@ end
         @test @inferred(broadcast(collect, data_enc[2:5])) == data_orig[2:5]
         @test @inferred(innersizes(data_enc)) == size.(data_orig)
         @test IndexStyle(typeof(data_enc)) == IndexLinear()
+        @test @inferred(innerlengths(data_enc)) == length.(data_orig)
+        @test @inferred(getsplitmode(data_enc)) == getsplitmode(data_orig)
+        @test @inferred(fused(data_enc)) == fused(data_orig)
+        @test splitup(fused(data_enc), getsplitmode(data_enc)) == data_orig
+        @test flatview(data_enc) == flatview(data_orig)
+        @test innersum(data_enc) == innersum(data_orig)
+
+        data_app = @inferred(empty(data_enc))
+        @test data_app isa VectorOfEncodedArrays{Int,1} && isempty(data_app)
+        @test @inferred(push!(data_app, data_orig[1])) === data_app
+        @test @inferred(append!(data_app, data_orig[2:end])) === data_app
+        @test data_app == data_enc
+        @test data_enc != data_enc[1:end-1]
+        @test broadcast(collect, vcat(data_enc, data_enc[2:3])) == vcat(data_orig, data_orig[2:3])
+        @test_throws ArgumentError vcat(data_enc, broadcast(|>, data_orig, RawArrayCodec()))
 
         mat_orig = VectorOfArrays([rand(Int32, rand(1:3), rand(1:3)) for i in 1:5])
         mat_enc = @inferred(broadcast(|>, mat_orig, RawArrayCodec()))
@@ -170,5 +185,17 @@ end
         @test parent(data_enc) == parent(data_orig)
         @test data_enc == data_orig
         @test stack(data_enc) == stack(data_orig)
+        @test @inferred(getsplitmode(data_enc)) == getsplitmode(data_orig)
+        @test splitup(fused(data_enc), getsplitmode(data_enc)) == data_orig
+        @test flatview(data_enc) == flatview(data_orig)
+        @test innersum(data_enc) == innersum(data_orig)
+
+        data_app = @inferred(empty(data_enc))
+        @test data_app isa VectorOfEncodedSimilarArrays{Int,1} && isempty(data_app)
+        @test @inferred(push!(data_app, data_orig[1])) === data_app
+        @test @inferred(append!(data_app, data_orig[2:end])) === data_app
+        @test data_app == data_enc
+        @test_throws DimensionMismatch push!(data_app, data_orig[1][1:end-1])
+        @test broadcast(collect, vcat(data_enc, data_enc[2:3])) == vcat(data_orig, data_orig[2:3])
     end
 end # testset

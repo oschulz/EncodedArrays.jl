@@ -8,3 +8,5 @@ Random access on an encoded array will typically be very inefficient, but linear
 This package defines two central abstract types, [`AbstractEncodedArray`](@ref) and [`AbstractArrayCodec`](@ref). It also defines a concrete type [`EncodedArray`](@ref) that implements most of the API and only leaves [`EncodedArrays.encode_data!`](@ref) and [`EncodedArrays.decode_data!`](@ref) for a new codec to implement.
 
 Vectors of arrays that are all encoded with the same codec can be stored efficiently using [`VectorOfEncodedArrays`](@ref) and [`VectorOfEncodedSimilarArrays`](@ref); broadcasting a codec over a vector of arrays (`A .|> codec`) and broadcasting `collect` over the result construct these directly.
+
+Both types integrate with the split-mode API of ArraysOfArrays: `ArraysOfArrays.fused` decodes all element arrays into flat data and `ArraysOfArrays.getsplitmode` describes their layout, so functions like `flatview`, `innersum` or `mapat` work directly on vectors of encoded arrays (decoding all elements in the process). `push!`, `append!` and `vcat` encode and add further arrays.

@@ -5,7 +5,6 @@ module EncodedArrays
 using ArraysOfArrays
 using ArraysOfArrays: NestedArrayStyle
 using BitOperations
-using FillArrays
 
 include("encoded_array.jl")
 include("varlen_io.jl")
