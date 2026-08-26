@@ -16,7 +16,9 @@ See [`EncodedArrays.write_varlen`](@ref).
     while true
         (pos >= maxPos) && throw(ErrorException("Overflow during decoding of variable-length encoded number."))
         b = read(io, UInt8)
-        x = x | (T(b & 0x7f) << pos)
+        b7 = b & 0x7f
+        (pos + 8 - leading_zeros(b7) <= maxPos) || throw(ErrorException("Overflow during decoding of variable-length encoded number."))
+        x = x | (T(b7) << pos)
         if ((b & 0x80) == 0)
             return x
         else
