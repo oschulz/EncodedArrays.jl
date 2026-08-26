@@ -8,7 +8,7 @@ BitOperations = "e1e0eea2-bc69-5bf6-8574-13634873a17c"
 FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
 
 [compat]
-ArraysOfArrays = "0.7"
+ArraysOfArrays = "1"
 BitOperations = "0.2"
 FillArrays = "1"
 julia = "1.10"
